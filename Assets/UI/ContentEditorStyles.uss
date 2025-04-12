@@ -12,10 +12,10 @@
     color: rgb(155, 255, 254);
     min-height: 20px;
     white-space: normal;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 #working-area-container > #unity-content-and-vertical-scroll-container > #unity-content-viewport > #unity-content-container {

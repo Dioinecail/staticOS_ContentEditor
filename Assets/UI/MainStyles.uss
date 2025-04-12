@@ -17,34 +17,50 @@
     border-right-color: rgb(20, 12, 29);
     border-top-color: rgb(20, 12, 29);
     border-bottom-color: rgb(20, 12, 29);
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .btn-main {
     background-color: rgb(129, 101, 154);
     color: rgb(255, 255, 255);
     -unity-font-style: bold;
-    border-left-color: rgb(51, 37, 37);
-    border-right-color: rgb(51, 37, 37);
-    border-top-color: rgb(51, 37, 37);
+    border-left-color: rgb(192, 141, 141);
+    border-right-color: rgb(50, 36, 36);
+    border-top-color: rgb(192, 141, 141);
     border-bottom-color: rgb(51, 37, 37);
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
     border-left-width: 1px;
     border-right-width: 1px;
     border-top-width: 1px;
     border-bottom-width: 1px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
 }
 
 .btn-main:hover {
     background-color: rgb(148, 120, 176);
+    border-right-color: rgb(95, 64, 78);
+    border-bottom-color: rgb(99, 67, 81);
+    border-top-color: rgb(192, 141, 167);
+    border-left-color: rgb(192, 141, 168);
 }
 
 .btn-main:active {
     background-color: rgb(76, 58, 94);
+    border-left-color: rgb(95, 64, 78);
+    border-right-color: rgb(192, 141, 167);
+    border-top-color: rgb(95, 64, 78);
+    border-bottom-color: rgb(192, 141, 167);
 }
