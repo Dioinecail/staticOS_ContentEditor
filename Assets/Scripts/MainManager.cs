@@ -61,7 +61,7 @@ namespace Project.StaticOSEditor
 
             folderElem.Q<Label>("header").text = dirInfo.Name;
 
-            if(banner != null)
+            if (banner != null)
             {
                 folderElem.Q("content-container").style.backgroundImage = banner;
             }
@@ -177,9 +177,19 @@ namespace Project.StaticOSEditor
 
             yield return null;
 
+            var isFolder = false;
+
             var folderInput = m_ModalCreateFolder.rootVisualElement.Q<TextField>();
             var buttonCreate = m_ModalCreateFolder.rootVisualElement.Q<Button>("button-create");
             var buttonCancel = m_ModalCreateFolder.rootVisualElement.Q<Button>("button-cancel");
+            var buttonType = m_ModalCreateFolder.rootVisualElement.Q<Button>("button-type");
+
+            buttonType.clicked += () =>
+            {
+                isFolder = !isFolder;
+
+                buttonType.text = isFolder ? "Type: Folder" : "Type: Content";
+            };
 
             buttonCreate.clicked += () =>
             {
