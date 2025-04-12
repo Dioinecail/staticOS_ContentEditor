@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Content;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -22,6 +24,7 @@ namespace Project.StaticOSEditor
         [SerializeField] private string m_ContentEditorScene;
 
         private VisualElement m_ContentContainer;
+        private Label m_LocalPathContainer;
         private TextField m_ContentPathInput;
         private Coroutine m_CoroutineLoadScene;
 
@@ -38,28 +41,28 @@ namespace Project.StaticOSEditor
             var buttonOpenContents = m_DomElement.rootVisualElement.Q<Button>("button-open-folder");
             m_ContentPathInput = m_DomElement.rootVisualElement.Q<TextField>("input-path");
             var versionLabel = m_DomElement.rootVisualElement.Q<Label>("version-label");
+            m_LocalPathContainer = m_DomElement.rootVisualElement.Q<Label>("local-path");
 
             buttonOpenPath.clicked += HandlePathClicked;
-            buttonOpenContents.clicked += HandleOpenContentsClicked;
+            buttonOpenContents.clicked += () => HandleFolderClicked("");
 
             var oldPath = PlayerPrefs.GetString(c_ContentRootKey, string.Empty);
 
             if (!string.IsNullOrEmpty(oldPath))
             {
                 m_ContentPathInput.value = oldPath;
-                HandleOpenContentsClicked();
+                HandleFolderClicked("");
             }
 
             versionLabel.text = $"v{Application.version}";
         }
 
-        private VisualElement CreateButton(string folder)
+        private VisualElement CreateButton(JSONObject content, string folder)
         {
-            var dirInfo = new DirectoryInfo(folder);
             var folderElem = m_ButtonTemplate.CloneTree();
-            var banner = GetImage(folder);
+            var banner = GetImage(Path.Combine(folder, content["banner"].str));
 
-            folderElem.Q<Label>("header").text = dirInfo.Name;
+            folderElem.Q<Label>("header").text = content["title"].str;
 
             if (banner != null)
             {
@@ -71,11 +74,13 @@ namespace Project.StaticOSEditor
             return folderElem;
         }
 
-        private Texture2D GetImage(string folder)
+        private Texture2D GetImage(string bannerPath)
         {
-            var bannerUrlJpg = $"{folder}.jpg";
-            var bannerUrlPng = $"{folder}.png";
-            var bannerUrlJpeg = $"{folder}.jpeg";
+            var absolutePath = Path.Combine(m_ContentPathInput.value, bannerPath);
+
+            var bannerUrlJpg = $"{absolutePath}.jpg";
+            var bannerUrlPng = $"{absolutePath}.png";
+            var bannerUrlJpeg = $"{absolutePath}.jpeg";
 
             Texture2D picture = null;
             byte[] pictureBytes = null;
@@ -126,7 +131,7 @@ namespace Project.StaticOSEditor
             return folderElem;
         }
 
-        private IEnumerator DoLoadContent(string contentPath)
+        private IEnumerator DoLoadContent(string contentAbsolutePath, string localPath)
         {
             m_DomElement.enabled = false;
 
@@ -144,7 +149,7 @@ namespace Project.StaticOSEditor
                 manager = ContentManager.Instance;
             }
 
-            manager.LoadContent(contentPath);
+            manager.LoadContent(contentAbsolutePath, localPath);
 
             yield return null;
 
@@ -194,7 +199,7 @@ namespace Project.StaticOSEditor
             buttonCreate.clicked += () =>
             {
                 if (folderInput.value != "filler text")
-                    CreateFolder(folderInput.value, folder);
+                    CreateFolder(folderInput.value, folder, isFolder);
             };
 
             buttonCancel.clicked += () =>
@@ -203,33 +208,74 @@ namespace Project.StaticOSEditor
             };
         }
 
-        private void HandleFolderClicked(string folder)
+        private void HandleFolderClicked(string localPath)
         {
             m_ContentContainer.Clear();
 
-            var contentFolders = Directory.GetDirectories(folder);
-            var buttonBack = CreateBackButton();
+            var foldersArray = localPath.Split('/');
 
-            buttonBack.Q<Button>().clicked += HandleOpenContentsClicked;
-
-            foreach (var contentPath in contentFolders)
+            if (localPath != "")
             {
-                var contentButton = CreateButton(contentPath);
+                CreateBackButton().Q<Button>().clicked += () =>
+                {
+                    var upperPath = foldersArray.Length > 1
+                            ? Path.Combine(foldersArray.Take(foldersArray.Length - 1).ToArray())
+                            : "";
 
-                contentButton.Q<Button>().clicked += () => HandleContentClicked(contentPath);
+                    HandleFolderClicked(upperPath);
+                };
             }
 
-            var newContentButton = CreateNewButton();
+            var contentJsonPath = Path.Combine(m_ContentPathInput.value, localPath, "content.json");
+            var json = JSONObject.Create(File.ReadAllText(contentJsonPath));
 
-            newContentButton.Q<Button>().clicked += () => StartCoroutine(HandleCreateNewFolderButtonClicked(folder));
+            var contents = json["contents"];
+
+            m_LocalPathContainer.text = $"local path: '{localPath}'";
+
+            foreach (var c in contents)
+            {
+                var contentButton = CreateButton(c, localPath);
+
+                contentButton.Q<Button>().clicked += () => HandleContentClicked(c, localPath);
+            }
+
+            if (localPath != "")
+            {
+                CreateNewButton().Q<Button>().clicked += () => StartCoroutine(HandleCreateNewFolderButtonClicked(localPath));
+            }
         }
 
-        private void CreateFolder(string name, string root)
+        private void CreateFolder(string name, string root, bool isFolder)
         {
-            var path = Path.Combine(root, name);
+            var path = Path.Combine(m_ContentPathInput.value, root, name);
             var newDirectoryInfo = Directory.CreateDirectory(path);
 
             m_ModalCreateFolder.enabled = false;
+
+            var contentJsonPath = Path.Combine(m_ContentPathInput.value, root, "content.json");
+            var json = JSONObject.Create(File.ReadAllText(contentJsonPath));
+
+            var dataArray = json["contents"];
+            var newContentOrFolder = JSONObject.Create(JSONObject.Type.OBJECT);
+
+            newContentOrFolder.SetField("index", dataArray.Count);
+            newContentOrFolder.SetField("title", name);
+            newContentOrFolder.SetField("banner", "");
+            newContentOrFolder.SetField("path", Path.Combine(root, name).Replace('\\', '/'));
+            newContentOrFolder.SetField("type", isFolder ? "folder" : "content");
+
+            dataArray.Add(newContentOrFolder);
+            json["contents"] = dataArray;
+
+            File.WriteAllText(contentJsonPath, json.Print(true));
+
+            var internalContentJsonPath = Path.Combine(m_ContentPathInput.value, root, name, "content.json");
+            var internalContentJson = JSONObject.Create(JSONObject.Type.OBJECT);
+
+            internalContentJson.SetField(isFolder ? "contents" : "content", JSONObject.Create(JSONObject.Type.ARRAY));
+
+            File.WriteAllText(internalContentJsonPath, internalContentJson.Print(true));
 
             HandleFolderClicked(root);
         }
@@ -252,38 +298,24 @@ namespace Project.StaticOSEditor
             PlayerPrefs.Save();
         }
 
-        private void HandleOpenContentsClicked()
+        private void HandleContentClicked(JSONObject content, string folder)
         {
-            var path = m_ContentPathInput.value;
-
-            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+            switch (content["type"].str)
             {
-                return;
+                case "folder":
+                    HandleFolderClicked(content["path"].str);
+                    break;
+                case "content":
+                    if (m_CoroutineLoadScene != null)
+                        return;
+
+                    var contentAbsolutePath = Path.Combine(m_ContentPathInput.value, content["path"].str);
+
+                    m_CoroutineLoadScene = StartCoroutine(DoLoadContent(contentAbsolutePath, content["path"].str));
+                    break;
+                default:
+                    return;
             }
-
-            m_ContentContainer.Clear();
-
-            var folders = Directory.GetDirectories(path);
-
-            foreach (var folder in folders)
-            {
-                if (folder.Contains(".git"))
-                    continue;
-
-                var folderButton = CreateButton(folder);
-
-                folderButton.Q<Button>().clicked += () => HandleFolderClicked(folder);
-            }
-
-            OnContentRootOpened?.Invoke(path);
-        }
-
-        private void HandleContentClicked(string contentPath)
-        {
-            if (m_CoroutineLoadScene != null)
-                return;
-
-            m_CoroutineLoadScene = StartCoroutine(DoLoadContent(contentPath));
         }
 
         private void HandleBackClicked()

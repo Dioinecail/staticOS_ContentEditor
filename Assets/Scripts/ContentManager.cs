@@ -41,26 +41,27 @@ namespace Project.StaticOSEditor
         private Label m_TitlePreview;
         private Toggle m_ToggleIsPublished;
 
-        List<ContentObject> m_ContentObjects = new List<ContentObject>();
-        JSONObject m_ContentJson;
-        JSONObject m_FoldersJson;
-        JSONObject m_FolderInfo;
-        ContentObject m_ObjectForDeletion;
-        Vector3 m_CursorPositionForPicture;
-        ExtensionFilter[] m_ImageFilters = new ExtensionFilter[] {
+        private List<ContentObject> m_ContentObjects = new List<ContentObject>();
+        private JSONObject m_ContentJson;
+        private JSONObject m_FoldersJson;
+        private JSONObject m_FolderInfo;
+        private ContentObject m_ObjectForDeletion;
+        private Vector3 m_CursorPositionForPicture;
+        private ExtensionFilter[] m_ImageFilters = new ExtensionFilter[] {
             new ExtensionFilter("", new string[]
             {
                 "png", "jpg", "jpeg"
             })
         };
-        string m_FolderId;
-        bool m_IsBlogPublished = true;
+        private bool m_IsBlogPublished = true;
+        private int m_ContentIndex = -1;
+        private string m_LocalPath;
 
 
 
-        public void LoadContent(string contentPath)
+        public void LoadContent(string contentPath, string localPath)
         {
-            StartCoroutine(DoLoadContent(contentPath));
+            StartCoroutine(DoLoadContent(contentPath, localPath));
         }
 
         public string GetPathToContent()
@@ -70,17 +71,32 @@ namespace Project.StaticOSEditor
 
         public string GetPathToFoldersJson()
         {
-            return Path.Combine(m_PathToContentText.text, "../", "folders.json");
+            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
+            var path = Path.Combine(dirInfo.Parent.FullName, "content.json");
+
+            return path;
+        }
+
+        public string GetPathToContentJson()
+        {
+            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
+            var path = Path.Combine(dirInfo.FullName, "content.json");
+
+            return path;
         }
 
         public string GetPathToBanner(string extension)
         {
-            return Path.Combine(m_PathToContentText.text, "../", $"{m_FolderId}{extension}");
+            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
+
+            return Path.Combine(m_PathToContentText.text, "../", $"{dirInfo.Name}{extension}");
         }
 
-        private IEnumerator DoLoadContent(string contentPath)
+        private IEnumerator DoLoadContent(string contentPath, string localPath)
         {
             yield return null;
+
+            m_LocalPath = localPath;
 
             m_WorkingArea = DomElement.Q("working-area-container");
             m_PathToContentText = DomElement.Q<Label>("content-path");
@@ -95,55 +111,32 @@ namespace Project.StaticOSEditor
             m_ToggleIsPublished.RegisterValueChangedCallback(HandleToggleIsPublishedChanged);
 
             m_PathToContentText.text = contentPath;
+            m_FoldersJson = JSONObject.Create(File.ReadAllText(GetPathToFoldersJson()));
+            m_ContentIndex = -1;
 
-            var foldersJsonPath = GetPathToFoldersJson();
-
-            if (!File.Exists(foldersJsonPath))
+            for (int i = 0; i < m_FoldersJson["contents"].Count; i++)
             {
-                m_FoldersJson = JSONObject.Create(JSONObject.Type.OBJECT);
-                m_FoldersJson.SetField("contents", JSONObject.Create(JSONObject.Type.OBJECT));
-
-                var jsonToWrite = m_FoldersJson.Print(true);
-
-                File.WriteAllText(foldersJsonPath, jsonToWrite);
+                if (m_FoldersJson["contents"][i]["path"].str == localPath)
+                {
+                    m_ContentIndex = i;
+                    break;
+                }
             }
 
-            m_FoldersJson = JSONObject.Create(File.ReadAllText(GetPathToFoldersJson()));
-
-            var folders = contentPath.Split('\\');
-            m_FolderId = folders[folders.Length - 1];
-
-            if (m_FoldersJson["contents"].HasField(m_FolderId))
+            if (m_ContentIndex == -1)
             {
-                m_FolderInfo = m_FoldersJson["contents"][m_FolderId];
-                m_TitleInput.value = m_FolderInfo["title"].str;
+                throw new Exception($"Could not find index for '{localPath}'");
+            }
 
-                if (!m_FolderInfo.HasField("banner"))
-                {
-                    if (File.Exists($"{m_PathToContentText.text}.jpg"))
-                    {
-                        m_FolderInfo.SetField("banner", $"{m_FolderId}.jpg");
-                    }
-                    else if (File.Exists($"{m_PathToContentText.text}.png"))
-                    {
-                        m_FolderInfo.SetField("banner", $"{m_FolderId}.png");
-                    }
-                    else if (File.Exists($"{m_PathToContentText.text}.jpeg"))
-                    {
-                        m_FolderInfo.SetField("banner", $"{m_FolderId}.jpeg");
-                    }
-                    else
-                    {
-                        m_FolderInfo.SetField("banner", string.Empty);
-                    }
+            m_FolderInfo = m_FoldersJson["contents"][m_ContentIndex];
+            m_TitleInput.value = m_FolderInfo["title"].str;
 
-                    m_FoldersJson["contents"].SetField(m_FolderId, m_FolderInfo);
+            var bannerLocalPath = m_FolderInfo["banner"].str;
 
-                    File.WriteAllText(GetPathToFoldersJson(), m_FoldersJson.Print(true));
-                }
-
+            if (!string.IsNullOrEmpty(bannerLocalPath))
+            {
                 var imageExt = Path.GetExtension(m_FolderInfo["banner"].str);
-                var bannerPath = $"{m_PathToContentText.text}{imageExt}";
+                var bannerPath = GetPathToBanner(imageExt);
 
                 Texture2D picture = null;
                 byte[] pictureBytes = null;
@@ -161,16 +154,6 @@ namespace Project.StaticOSEditor
                     m_BannerImage.style.backgroundImage = picture;
                 }
             }
-            else
-            {
-                var index = m_FoldersJson["contents"].Count;
-
-                m_FoldersJson["contents"].AddField(m_FolderId, JSONObject.Create(JSONObject.Type.OBJECT));
-                m_FoldersJson["contents"][m_FolderId].SetField("title", string.Empty);
-                m_FoldersJson["contents"][m_FolderId].SetField("index", index);
-
-                File.WriteAllText(GetPathToFoldersJson(), m_FoldersJson.Print(true));
-            }
 
             if (m_ContentObjects != null && m_ContentObjects.Count > 0)
                 yield break;
@@ -178,8 +161,7 @@ namespace Project.StaticOSEditor
             if (!Directory.Exists(m_PathToContentText.text))
                 throw new Exception("Path to content doesn't exist!");
 
-            var files = Directory.GetFiles(m_PathToContentText.text);
-            var jsonFilePath = files.FirstOrDefault(f => Path.GetExtension(f).EndsWith("json"));
+            var jsonFilePath = GetPathToContentJson();
 
             if (!File.Exists(jsonFilePath))
             {
@@ -198,8 +180,8 @@ namespace Project.StaticOSEditor
 
             m_ContentJson = JSONObject.Create(json);
 
-            m_IsBlogPublished = m_FoldersJson["contents"][m_FolderId].HasField("isPublished") 
-                ? m_FoldersJson["contents"][m_FolderId]["isPublished"] 
+            m_IsBlogPublished = m_FoldersJson["contents"][m_ContentIndex].HasField("isPublished")
+                ? m_FoldersJson["contents"][m_ContentIndex]["isPublished"]
                 : true;
 
             m_ToggleIsPublished.SetValueWithoutNotify(m_IsBlogPublished);
@@ -426,7 +408,7 @@ namespace Project.StaticOSEditor
         {
             var newTitle = titleChangedEvt.newValue;
 
-            m_FoldersJson["contents"][m_FolderId].SetField("title", newTitle);
+            m_FoldersJson["contents"][m_ContentIndex].SetField("title", newTitle);
 
             var toJson = m_FoldersJson.Print(true);
             var folderInfoPath = GetPathToFoldersJson();
@@ -467,7 +449,7 @@ namespace Project.StaticOSEditor
             picture.LoadImage(File.ReadAllBytes(bannerPath));
 
             m_BannerImage.style.backgroundImage = picture;
-            m_FoldersJson["contents"][m_FolderId].SetField("banner", $"{m_FolderId}{ext}");
+            m_FoldersJson["contents"][m_ContentIndex].SetField("banner", $"{m_LocalPath}{ext}");
 
             var toJson = m_FoldersJson.Print(true);
             var folderInfoPath = GetPathToFoldersJson();
@@ -478,7 +460,7 @@ namespace Project.StaticOSEditor
         private void HandleToggleIsPublishedChanged(ChangeEvent<bool> evt)
         {
             m_IsBlogPublished = evt.newValue;
-            m_FoldersJson["contents"][m_FolderId].SetField("isPublished", evt.newValue);
+            m_FoldersJson["contents"][m_ContentIndex].SetField("isPublished", evt.newValue);
 
             var toJson = m_FoldersJson.Print(true);
             var folderInfoPath = GetPathToFoldersJson();
