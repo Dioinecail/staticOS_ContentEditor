@@ -22,11 +22,14 @@ namespace Project.StaticOSEditor
         [SerializeField] private UIDocument m_ModalCreateFolder;
         [SerializeField] private VisualTreeAsset m_ButtonTemplate;
         [SerializeField] private string m_ContentEditorScene;
+        [SerializeField] private string m_FriendsEditorScene;
+        [SerializeField] private string m_PortfolioEditorScene;
 
         private VisualElement m_ContentContainer;
         private Label m_LocalPathContainer;
         private TextField m_ContentPathInput;
         private Coroutine m_CoroutineLoadScene;
+        private string m_CurrentEditorScene;
 
 
 
@@ -131,22 +134,25 @@ namespace Project.StaticOSEditor
             return folderElem;
         }
 
-        private IEnumerator DoLoadContent(string contentAbsolutePath, string localPath)
+        private IEnumerator DoLoadContent(string contentEditorScene, string contentAbsolutePath, string localPath)
         {
             m_DomElement.enabled = false;
+            m_CurrentEditorScene = contentEditorScene;
 
-            var loadOperation = SceneManager.LoadSceneAsync(m_ContentEditorScene, LoadSceneMode.Additive);
+            var loadOperation = SceneManager.LoadSceneAsync(contentEditorScene, LoadSceneMode.Additive);
 
             while (!loadOperation.isDone)
             {
                 yield return null;
             }
 
-            ContentManager manager = null;
+            ContentEditorBase manager = null;
 
             while (manager == null)
             {
-                manager = ContentManager.Instance;
+                manager = FindObjectOfType<ContentEditorBase>(true);
+
+                yield return null;
             }
 
             manager.LoadContent(contentAbsolutePath, localPath);
@@ -160,9 +166,9 @@ namespace Project.StaticOSEditor
             m_CoroutineLoadScene = null;
         }
 
-        private IEnumerator DoUnloadContent()
+        private IEnumerator DoUnloadContent(string contentEditorScene)
         {
-            var unloadOperation = SceneManager.UnloadSceneAsync(m_ContentEditorScene);
+            var unloadOperation = SceneManager.UnloadSceneAsync(contentEditorScene);
 
             while (!unloadOperation.isDone)
             {
@@ -300,18 +306,37 @@ namespace Project.StaticOSEditor
 
         private void HandleContentClicked(JSONObject content, string folder)
         {
+            var path = content["path"].str;
+
             switch (content["type"].str)
             {
                 case "folder":
-                    HandleFolderClicked(content["path"].str);
+                    if (path == "music")
+                        return;
+
+                    HandleFolderClicked(path);
                     break;
                 case "content":
                     if (m_CoroutineLoadScene != null)
                         return;
 
-                    var contentAbsolutePath = Path.Combine(m_ContentPathInput.value, content["path"].str);
+                    var contentAbsolutePath = Path.Combine(m_ContentPathInput.value, path);
 
-                    m_CoroutineLoadScene = StartCoroutine(DoLoadContent(contentAbsolutePath, content["path"].str));
+                    if (path.StartsWith("blog") || path.StartsWith("art"))
+                    {
+                        m_CoroutineLoadScene = StartCoroutine(DoLoadContent(m_ContentEditorScene, contentAbsolutePath, path));
+                    }
+
+                    if (path.StartsWith("friends"))
+                    {
+                        m_CoroutineLoadScene = StartCoroutine(DoLoadContent(m_FriendsEditorScene, contentAbsolutePath, path));
+                    }
+
+                    if (path.StartsWith("portfolio"))
+                    {
+                        m_CoroutineLoadScene = StartCoroutine(DoLoadContent(m_PortfolioEditorScene, contentAbsolutePath, path));
+                    }
+
                     break;
                 default:
                     return;
@@ -323,7 +348,7 @@ namespace Project.StaticOSEditor
             if (m_CoroutineLoadScene != null)
                 return;
 
-            m_CoroutineLoadScene = StartCoroutine(DoUnloadContent());
+            m_CoroutineLoadScene = StartCoroutine(DoUnloadContent(m_CurrentEditorScene));
         }
     }
 }

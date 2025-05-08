@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/MainStyles.uss?fileID=7433441132597879392&amp;guid=d6d87a6a86f2b9f4284696eb587adfb8&amp;type=3#MainStyles" />
+    <ui:VisualElement name="root" style="flex-grow: 1; background-color: rgb(69, 64, 82); flex-direction: row;">
+        <ui:VisualElement name="config-preview-area" style="width: 400px; background-color: rgb(47, 43, 51); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; margin-left: 2px; margin-right: 2px; margin-top: 2px; margin-bottom: 2px;">
+            <ui:VisualElement style="flex-direction: row; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgb(78, 73, 84); padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px; height: 28px;">
+                <ui:Button text="BACK" display-tooltip-when-elided="true" name="button-back" class="btn-main" style="height: 20px; -unity-font-definition: url(&quot;project://database/Assets/Fonts/SpaceMono-Regular_.asset?fileID=11400000&amp;guid=9774e9df3cb925a42889c1faa02d54be&amp;type=2#SpaceMono-Regular_&quot;); font-size: 8px; width: 42px;" />
+                <ui:Label text="Content Path" display-tooltip-when-elided="true" name="content-path" style="padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px; -unity-text-align: middle-left; flex-grow: 1; color: rgb(255, 255, 255); -unity-font-definition: url(&quot;project://database/Assets/Fonts/SpaceMono-Regular_.asset?fileID=11400000&amp;guid=9774e9df3cb925a42889c1faa02d54be&amp;type=2#SpaceMono-Regular_&quot;); font-size: 8px;" />
+            </ui:VisualElement>
+            <ui:ScrollView name="config-preview-scrollview" style="padding-left: 3px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px; position: absolute; left: 0; top: 28px; right: 0; bottom: 0;">
+                <ui:Label text="{&#10;&#x9;&quot;content&quot;: {&#10;&#x9;&#x9;&quot;chop&quot;:&quot;stuff&quot;&#10;&#x9;}&#10;}" display-tooltip-when-elided="true" name="config-preview" style="flex-grow: 1; color: rgb(255, 255, 255); font-size: 8px; -unity-font-definition: url(&quot;project://database/Assets/Fonts/SpaceMono-Regular_.asset?fileID=11400000&amp;guid=9774e9df3cb925a42889c1faa02d54be&amp;type=2#SpaceMono-Regular_&quot;);" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-grow: 1;">
+            <ui:Button text="Add New" parse-escape-sequences="true" display-tooltip-when-elided="true" name="button-add" class="btn-main" style="height: 30px;" />
+            <ui:ScrollView name="friends-grid" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

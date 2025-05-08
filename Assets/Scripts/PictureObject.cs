@@ -16,7 +16,7 @@ namespace Project.StaticOSEditor
 
                 m_PicturePath = value;
 
-                var url = Path.Combine(ContentManager.Instance.GetPathToContent(), value);
+                var url = Path.Combine(GameObject.FindObjectOfType<ContentManager>().GetPathToContent(), value);
 
                 if (Picture != null)
                     GameObject.Destroy(Picture);

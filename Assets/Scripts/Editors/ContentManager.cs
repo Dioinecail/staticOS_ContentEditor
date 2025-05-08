@@ -11,28 +11,15 @@ using UnityEngine.UIElements;
 
 namespace Project.StaticOSEditor
 {
-    public class ContentManager : MonoBehaviour
+    /// <summary>
+    /// Blog/Art content editor
+    /// </summary>
+    public class ContentManager : ContentEditorBase
     {
-        public static ContentManager Instance
-        {
-            get
-            {
-                if (m_Instance == null)
-                    m_Instance = FindObjectOfType<ContentManager>();
-
-                return m_Instance;
-            }
-        }
-        private static ContentManager m_Instance;
-
-        public VisualElement DomElement => m_DomElement.rootVisualElement;
-
-        [SerializeField] private UIDocument m_DomElement;
         [SerializeField] private VisualTreeAsset m_PicturePrefab;
         [SerializeField] private VisualTreeAsset m_TextPrefab;
         [SerializeField] private UIDocument m_RightClickMenu;
 
-        private Label m_PathToContentText;
         private Label m_ContentJsonPreview;
         private TextField m_TitleInput;
         private VisualElement m_BannerImage;
@@ -42,7 +29,6 @@ namespace Project.StaticOSEditor
         private Toggle m_ToggleIsPublished;
 
         private List<ContentObject> m_ContentObjects = new List<ContentObject>();
-        private JSONObject m_ContentJson;
         private JSONObject m_FoldersJson;
         private JSONObject m_FolderInfo;
         private ContentObject m_ObjectForDeletion;
@@ -59,37 +45,9 @@ namespace Project.StaticOSEditor
 
 
 
-        public void LoadContent(string contentPath, string localPath)
+        public override void LoadContent(string contentPath, string localPath)
         {
             StartCoroutine(DoLoadContent(contentPath, localPath));
-        }
-
-        public string GetPathToContent()
-        {
-            return m_PathToContentText.text;
-        }
-
-        public string GetPathToFoldersJson()
-        {
-            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
-            var path = Path.Combine(dirInfo.Parent.FullName, "content.json");
-
-            return path;
-        }
-
-        public string GetPathToContentJson()
-        {
-            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
-            var path = Path.Combine(dirInfo.FullName, "content.json");
-
-            return path;
-        }
-
-        public string GetPathToBanner(string extension)
-        {
-            var dirInfo = new DirectoryInfo(m_PathToContentText.text);
-
-            return Path.Combine(m_PathToContentText.text, "../", $"{dirInfo.Name}{extension}");
         }
 
         private IEnumerator DoLoadContent(string contentPath, string localPath)
@@ -341,11 +299,6 @@ namespace Project.StaticOSEditor
                     break;
             }
 
-            var cursorPosition = Input.mousePosition;
-            var cursorWorld = Camera.main.ScreenToWorldPoint(cursorPosition);
-            cursorWorld.z = 0f;
-            m_CursorPositionForPicture = cursorWorld;
-
             newObjectPrefab.Index = m_ContentObjects.Count;
             newObjectPrefab.Type = optionIndex == 0 ? "text" : "pic";
 
@@ -373,7 +326,7 @@ namespace Project.StaticOSEditor
 
             if (m_ObjectForDeletion is PictureObject)
             {
-                var picturePath = Path.Combine(ContentManager.Instance.GetPathToContent(), m_ObjectForDeletion.Contents);
+                var picturePath = Path.Combine(GetPathToContent(), m_ObjectForDeletion.Contents);
 
                 if (File.Exists(picturePath))
                     File.Delete(picturePath);

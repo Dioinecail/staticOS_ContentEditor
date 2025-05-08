@@ -64,3 +64,31 @@
     border-top-color: rgb(95, 64, 78);
     border-bottom-color: rgb(192, 141, 167);
 }
+
+.input-main > Label {
+    color: rgb(255, 255, 255);
+    -unity-text-align: middle-left;
+    width: 91px;
+    min-width: 124px;
+}
+
+.input-main > #unity-text-input {
+    background-color: rgb(46, 46, 46);
+    color: rgb(255, 255, 255);
+    border-left-color: rgb(20, 12, 29);
+    border-right-color: rgb(20, 12, 29);
+    border-top-color: rgb(20, 12, 29);
+    border-bottom-color: rgb(20, 12, 29);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-top: 4px;
+    padding-right: 0;
+    padding-bottom: 4px;
+    padding-left: 0;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+}

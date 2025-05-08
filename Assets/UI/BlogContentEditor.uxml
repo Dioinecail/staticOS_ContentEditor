@@ -16,7 +16,7 @@
             <ui:VisualElement name="header" style="height: 28px; background-color: rgb(78, 73, 84);">
                 <ui:Label text="Working Area" display-tooltip-when-elided="true" style="flex-grow: 1; -unity-text-align: middle-left; padding-left: 6px; padding-right: 3px; padding-top: 3px; padding-bottom: 3px; color: rgb(255, 255, 255); -unity-font-style: normal; font-size: 16px; -unity-font-definition: url(&quot;project://database/Assets/Fonts/SpaceMono-Regular_.asset?fileID=11400000&amp;guid=9774e9df3cb925a42889c1faa02d54be&amp;type=2#SpaceMono-Regular_&quot;);" />
             </ui:VisualElement>
-            <ui:ScrollView name="working-area-container" vertical-page-size="900" style="width: 100%; position: absolute; left: 0; top: 28px; right: 0; bottom: 0;" />
+            <ui:ScrollView name="working-area-container" mouse-wheel-scroll-size="500" style="width: 100%; position: absolute; left: 0; top: 28px; right: 0; bottom: 0;" />
         </ui:VisualElement>
         <ui:VisualElement name="folder-area" style="margin-left: 2px; margin-right: 2px; margin-top: 2px; margin-bottom: 2px; background-color: rgb(47, 43, 51); flex-grow: 1; flex-shrink: 0; border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
             <ui:VisualElement name="header" style="height: 28px; flex-shrink: 0; background-color: rgb(78, 73, 84);">
